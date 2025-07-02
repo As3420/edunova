@@ -1,12 +1,14 @@
 const sgMail = require("@sendgrid/mail");
 const { InternalServerError } = require("http-errors"); // or use your custom error
 const logger = require("../logger");
-const EmailTemplates = require('../constant/EmailTemplates');
+const EmailTemplates = require("../constant/EmailTemplates");
+const config = require("../../config/config");
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
 class SendGridService {
   constructor() {
-    this.fromEmail = process.env.SENDGRID_FROM_EMAIL || "no-reply@academix.com";
+    this.fromEmail = config.SENDGRID_FROM_EMAIL;
+    this.toEmail = config.ADMIN_EMAIL_ENQUIRY;
   }
 
   async sendMail(to, subject, text, html) {
@@ -33,9 +35,34 @@ class SendGridService {
   }
 
   async sendOtp(userName, email, otp) {
-    const subject = "Edunova - OTP Verification";
+    const subject = EmailTemplates.sendOtp.subject;
     const text = EmailTemplates.sendOtp.text(userName, otp);
     const html = EmailTemplates.sendOtp.html(userName, otp);
+    await this.sendMail(email, subject, text, html);
+  }
+
+  async sendEnquiryEmail(fullName, email, phone, message) {
+    const subject = `New Enquiry from ${fullName}`;
+    const text = EmailTemplates.sendEnquiry.text(
+      fullName,
+      email,
+      phone,
+      message
+    );
+    const html = EmailTemplates.sendEnquiry.html(
+      fullName,
+      email,
+      phone,
+      message
+    );
+
+    await this.sendMail(this.toEmail, subject, text, html);
+  }
+
+  async sendAutoReplyToUser(fullName, email) {
+    const subject = EmailTemplates.sendAutoReply.subject;
+    const text = EmailTemplates.sendAutoReply.text(fullName, email);
+    const html = EmailTemplates.sendAutoReply.html(fullName, email);
     await this.sendMail(email, subject, text, html);
   }
 }

@@ -3,6 +3,8 @@ const { catchAsync, AppError } = require("../utils/errorUtils");
 const successResponse = require("../utils/successResponse");
 const logger = require("../utils/logger");
 const emptyListResponse = require("../utils/emptyListResponse");
+const SendGridService = require("../utils/sendgrid/SendGridService");
+const config = require("../config/config");
 
 const createEnquiry = catchAsync(async (req, res, next) => {
   const { fullName, email, phone, message } = req.body;
@@ -25,7 +27,12 @@ const createEnquiry = catchAsync(async (req, res, next) => {
       message,
     };
     await Enquiry.create(enquiryData);
-
+    await SendGridService.sendEnquiryEmail(fullName, email, phone, message);
+    await SendGridService.sendAutoReplyToUser(fullName, email);
+    logger.info(
+      `Enquiry sent successfully to email: ${config.ADMIN_EMAIL_ENQUIRY}`
+    );
+    console.log("send autoReply to the user!");
     return successResponse(res, 201, "Enquiry submitted successfully");
   } catch (error) {
     logger.error("Error creating enquiry:", error);
