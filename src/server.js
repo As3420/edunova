@@ -106,6 +106,7 @@ app.use("/api/v1/", enquiryRoutes);
 app.use("/api/v1/", testimonialRoutes);
 app.use("/api/v1", adminRoutes);
 
+app.get("/favicon.ico", (req, res) => res.status(204).end());
 // Error handling middleware
 app.all("*", notFound);
 app.use(errorHandler);
