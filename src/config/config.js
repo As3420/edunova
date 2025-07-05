@@ -42,10 +42,16 @@ module.exports = {
     process.env.REFRESH_TOKEN_EXPIRE,
     7 * 24 * 60 * 60 * 1000
   ),
+
+  MAILERSEND_API_KEY: process.env.MAILERSEND_API_KEY,
+  MAILERSEND_FROM_EMAIL: process.env.MAILERSEND_FROM_EMAIL,
+
   JWT_ACCESS_SECRET: process.env.JWT_ACCESS_SECRET,
   JWT_ACCESS_EXPIRE: process.env.JWT_ACCESS_EXPIRE || "15m",
   ADMIN_EMAIL: process.env.ADMIN_EMAIL || "admin@company.com",
   ADMIN_PASSWORD: process.env.ADMIN_PASSWORD || "Admin@123456",
   UPSTASH_REDIS_REST_URL: process.env.UPSTASH_REDIS_REST_URL,
   UPSTASH_REDIS_REST_TOKEN: process.env.UPSTASH_REDIS_REST_TOKEN,
+  BREVO_FROM_EMAIL: process.env.BREVO_FROM_EMAIL,
+  BREVO_API_KEY: process.env.BREVO_API_KEY,
 };

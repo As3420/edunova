@@ -1,33 +1,37 @@
-const sgMail = require("@sendgrid/mail");
-const { InternalServerError } = require("http-errors"); // or use your custom error
-const logger = require("../logger");
-const EmailTemplates = require("../constant/EmailTemplates");
-const config = require("../../config/config");
-sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+const Brevo = require('@getbrevo/brevo');
+const { InternalServerError } = require('http-errors');
+const logger = require('../logger');
+const EmailTemplates = require('../constant/EmailTemplates');
+const config = require('../../config/config');
 
 class SendGridService {
   constructor() {
-    this.fromEmail = config.SENDGRID_FROM_EMAIL;
+    const brevoClient = Brevo.ApiClient.instance;
+    const apiKey = brevoClient.authentications['api-key'];
+    apiKey.apiKey = config.BREVO_API_KEY;
+
+    this.apiInstance = new Brevo.TransactionalEmailsApi();
+    this.fromEmail = config.BREVO_FROM_EMAIL;
     this.toEmail = config.ADMIN_EMAIL_ENQUIRY;
   }
 
-  async sendMail(to, subject, text, html) {
-    const msg = {
-      to,
-      from: this.fromEmail,
-      subject,
-      text,
-      html,
+  async sendMail(to, subject, textContent, htmlContent) {
+    const sendSmtpEmail = {
+      sender: { email: this.fromEmail },
+      to: [{ email: to }],
+      subject: subject,
+      textContent,
+      htmlContent,
     };
 
     try {
-      await sgMail.send(msg);
+      await this.apiInstance.sendTransacEmail(sendSmtpEmail);
       logger.info(`✅ Email sent to ${to}`);
     } catch (error) {
       logger.error(`❌ Error sending email to ${to}: ${error.message}`);
-      if (error.response) {
+      if (error.response?.body) {
         logger.error(
-          `SendGrid Response Error: ${JSON.stringify(error.response.body)}`
+          `Brevo Error Response: ${JSON.stringify(error.response.body)}`
         );
       }
       throw new InternalServerError(`Error sending email to ${to}`);
@@ -43,19 +47,8 @@ class SendGridService {
 
   async sendEnquiryEmail(fullName, email, phone, message) {
     const subject = `New Enquiry from ${fullName}`;
-    const text = EmailTemplates.sendEnquiry.text(
-      fullName,
-      email,
-      phone,
-      message
-    );
-    const html = EmailTemplates.sendEnquiry.html(
-      fullName,
-      email,
-      phone,
-      message
-    );
-
+    const text = EmailTemplates.sendEnquiry.text(fullName, email, phone, message);
+    const html = EmailTemplates.sendEnquiry.html(fullName, email, phone, message);
     await this.sendMail(this.toEmail, subject, text, html);
   }
 

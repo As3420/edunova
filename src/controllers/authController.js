@@ -47,11 +47,11 @@ const signup = catchAsync(async (req, res, next) => {
       );
     }
 
-    const redisData = { name, email, password, otp };
-    await redis.set(redisKey, JSON.stringify(redisData), { ex: 600 });
-
     // Send OTP via email
     await SendGridService.sendOtp(name, email, otp);
+    const redisData = { name, email, password, otp };
+
+    await redis.set(redisKey, JSON.stringify(redisData), { ex: 600 });
 
     return successResponse(res, 201, "OTP sent to your email. Please verify.");
   } catch (error) {
@@ -273,8 +273,8 @@ const forgotPassword = catchAsync(async (req, res, next) => {
       );
     }
 
-    await redis.set(redisKey, JSON.stringify({ otp }), { ex: 600 });
     await SendGridService.sendOtp(user.name, email, otp);
+    await redis.set(redisKey, JSON.stringify({ otp }), { ex: 600 });
 
     return successResponse(
       res,
