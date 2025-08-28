@@ -25,6 +25,7 @@ const enquiryRoutes = require("./routes/enquiryRoutes");
 const testimonialRoutes = require("./routes/testimonialRoutes");
 const cookieParser = require("cookie-parser");
 const adminRoutes = require("./routes/adminRoutes");
+const employeeRoutes = require("./routes/employeeRoutes");
 const logger = require("./utils/logger");
 
 const app = express();
@@ -105,6 +106,7 @@ app.use("/api/v1", certificateRoutes);
 app.use("/api/v1/", enquiryRoutes);
 app.use("/api/v1/", testimonialRoutes);
 app.use("/api/v1", adminRoutes);
+app.use("/api/v1/employee", employeeRoutes);
 
 app.get("/favicon.ico", (req, res) => res.status(204).end());
 // Error handling middleware

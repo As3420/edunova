@@ -1,6 +1,7 @@
 // middleware/authMiddleware.js (UPDATED)
 const { verifyAccessToken } = require("../utils/jwtUtils");
 const User = require("../models/User");
+const Employee = require("../models/Employee");
 const config = require("../config/config");
 const { AppError } = require("../utils/errorUtils");
 const redisClient = require("../utils/redisClient/redisclient");
@@ -28,16 +29,28 @@ const protect = async (req, res, next) => {
       );
     }
 
-    const user = await User.findById(decoded.id).select("-password");
+    // Try to find user in User collection
+    let user = await User.findById(decoded.id).select("-password");
     if (!user) {
-      return next(
-        new AppError("User belonging to this token no longer exists.", 401)
-      );
+      // If not found, try Employee collection
+      user = await Employee.findById(decoded.id);
+      if (!user) {
+        return next(
+          new AppError("User or Employee belonging to this token no longer exists.", 401)
+        );
+      }
+      // Attach employee info and set role
+      req.user = { _id: user._id, employeeId: user.employeeId, name: user.name, role: "employee" };
+      req.isAuthenticated = true;
+      // If token is sent in body, also support it for backward compatibility
+      if (!req.headers["x-access-token"] && req.body.token) {
+        req.headers["x-access-token"] = req.body.token;
+      }
+      return next();
     }
     if (!user.isActive) {
       return next(new AppError("Your account has been deactivated.", 401));
     }
-
     req.user = user;
     req.isAuthenticated = true;
     next();
@@ -105,4 +118,20 @@ const userOnly = async (req, res, next) => {
   }
 };
 
-module.exports = { protect, adminOnly, userOnly };
+const employeeOnly = async (req, res, next) => {
+  if (!req.user?._id) {
+    return next(new AppError("Authentication required.", 401));
+  }
+  try {
+    const employeeInDB = await Employee.findById(req.user._id);
+    if (!employeeInDB) return next(new AppError("Employee not found.", 404));
+    if (req.user.role !== "employee") {
+      return next(new AppError("Employee privileges required.", 403));
+    }
+    next();
+  } catch (error) {
+    next(new AppError("Authorization error", 500));
+  }
+};
+
+module.exports = { protect, adminOnly, userOnly, employeeOnly };
