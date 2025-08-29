@@ -67,3 +67,18 @@ exports.updateDailyWork = async (req, res) => {
     res.status(500).json({ message: ERROR_MESSAGES.SERVER_ERROR || 'Server error', error: err.message });
   }
 };
+
+// Admin: Get all employees' daily work
+exports.getAllEmployeesDailyWork = async (req, res) => {
+  try {
+    const employees = await Employee.find({}, 'name employeeId dailyWork');
+    const result = employees.map(emp => ({
+      employeeId: emp.employeeId,
+      name: emp.name,
+      dailyWork: emp.dailyWork
+    }));
+    res.json({ employees: result });
+  } catch (err) {
+    res.status(500).json({ message: ERROR_MESSAGES.SERVER_ERROR || 'Server error', error: err.message });
+  }
+};
